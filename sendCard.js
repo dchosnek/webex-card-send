@@ -22,9 +22,9 @@ function findGroups(token) {
         axios.request(config)
             .then(response => {
                 // create the return map of title=>id
-                const rooms = new Map();
+                const rooms = new Array();
                 response.data.items.forEach(element => {
-                    rooms.set(element.id, element.title);
+                    rooms.push({name: element.title, value: element.id});
                 })
                 resolve(rooms);
             })
@@ -114,47 +114,26 @@ async function askPassword() {
     return answers.password;
 }
 
-async function askWhichRoom(roomMap) {
+async function askWhichRoom(roomList) {
     const inquirer = await import('inquirer').then(module => module.default);
-
-    const choices = roomMap.Map(element => {
-        new Map({name: element.title, value: element.id})
-    });
 
     const answer = await inquirer.prompt({
         type: "list",
         name: "roomId",
         message: "Where do you want to send the card?",
-        choices: [
-            {
-                name: 'one',
-                value: '1',
-                description: 'blah blah blah one'
-            },
-            {
-                name: 'two',
-                value: '2',
-                description: 'blah blah blah two'
-            },
-            {
-                name: 'three',
-                value: '3',
-                description: 'blah blah blah three'
-            },
-        ]
+        choices: roomList
     });
-    console.log(answer.roomId);
     return answer.roomId;
 }
 
 async function mainFunc(token) {
     try {
-        const roomMap = await findGroups(token);
+        const roomList = await findGroups(token);
         const card = await readJsonFile('message.json');
 
-        askWhichRoom();
+        const roomId = await askWhichRoom(roomList);
 
-        const status = await sendAttachment(token, '', card);
+        const status = await sendAttachment(token, roomId, card);
         console.log(status);
     } catch (error) {
         console.log(error);
