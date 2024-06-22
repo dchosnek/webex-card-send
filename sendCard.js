@@ -12,7 +12,7 @@ function findGroups(token) {
         const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://webexapis.com/v1/rooms?type=group&max=10',
+            url: 'https://webexapis.com/v1/rooms?type=group&max=20',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -118,23 +118,42 @@ async function askPassword() {
 }
 
 /* 
- * Allow user to pick one item from a list.
- * The return value is the value of the name the user picked.
- * @param {string} message - prompt used to ask the user for input
- * @param {array} choices - list of maps with keys 'name' and 'value' for the choices presented to the user
+ * Allow users to pick both room and card from a list.
+ * The return value is a list of the values the user picked.
+ * @param {array} faveList - list of maps of favorite rooms
+ * @param {array} roomList - list of maps of rooms
+ * @param {array} fileList - list of maps of filenames for cards
  */
-async function askFromList(message, choices) {
+async function askWhichRoom(faveList, roomList, fileList) {
     const inquirer = await import('inquirer').then(module => module.default);
 
-    const answer = await inquirer.prompt([
+    // if there are favorites, put them at the top of the list of choices
+    // with a separator between them and the other rooms listed
+    let roomChoices;
+    if (faveList.length) {
+        roomChoices = [...faveList, new inquirer.Separator(), ...roomList];
+    } else {
+        roomChoices = roomList
+    }
+
+    const answers = await inquirer.prompt([
         {
             type: "list",
-            name: "userSelection",
-            message: message,
-            choices: choices
-        }
+            name: "file",
+            message: "Which card do you want to send?",
+            loop: false,
+            choices: fileList
+        },
+        {
+            type: "list",
+            name: "room",
+            message: "Where do you want to send the card?",
+            loop: false,
+            choices: roomChoices
+        },
     ]);
-    return answer.userSelection;
+
+    return [answers.room, answers.file];
 }
 
 /* 
@@ -142,25 +161,52 @@ async function askFromList(message, choices) {
  * @param {string} token - Webex token used for all API interactions
  */
 async function mainFunc(token) {
+    // check for favorites
+    let favorites;
     try {
-        // ask user where to send the message
+        const contents = fs.readFileSync('favorites.json', 'utf8');
+        favorites = JSON.parse(contents);
+    } catch {
+        // if the favorites file did not exist, create an empty list of favorites
+        favorites = new Array();
+    }
+
+    try {
+        // get list of recent active rooms for the user
         const roomList = await findGroups(token);
-        const roomId = await askFromList("Where do you want to send the card?", roomList);
-        
-        // ask user which JSON file to send
+
+        // get a list of local JSON files
         const files = fs.readdirSync('./').filter(fn => fn.endsWith('.json')).map(fn => ({
-            name: fn, 
+            name: fn,
             value: fn
         }));
-        const filename = await askFromList("Which card do you want to send?", files)
+
+        // ask the user which card to send and which room to send it to
+        const [roomId, filename] = await askWhichRoom(favorites, roomList, files);
+
+        // retrieve the actual card contents
         const card = await readJsonFile(filename);
 
         // send the requested card to the requested room
         const status = await sendAttachment(token, roomId, card);
         console.log(status);
+
+        // udpate the favorites if we used a roomId that was not already in
+        // the list of favorites
+        if (!favorites.find(map => map.value === roomId)) {
+            const roomName = roomList.find(map => map.value === roomId).name;
+            favorites.unshift({ name: roomName, value: roomId });
+
+            // write out the favorites to a file (async)
+            fs.writeFile('favorites.json', JSON.stringify(favorites, null, 2), (err) => {
+                if (err) throw err;
+            });
+        }
+
     } catch (error) {
         console.log(error);
     }
+
 }
 
 
