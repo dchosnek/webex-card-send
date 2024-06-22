@@ -176,9 +176,9 @@ async function mainFunc(token) {
         const roomList = await findGroups(token);
 
         // get a list of local JSON files
-        const files = fs.readdirSync('./').filter(fn => fn.endsWith('.json')).map(fn => ({
+        const files = fs.readdirSync('cards/').filter(fn => fn.endsWith('.json')).map(fn => ({
             name: fn,
-            value: fn
+            value: `cards/${fn}`
         }));
 
         // ask the user which card to send and which room to send it to
