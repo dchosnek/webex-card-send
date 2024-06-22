@@ -71,7 +71,6 @@ function sendAttachment(token, roomId, card) {
                 resolve(response.statusText);
             })
             .catch(error => {
-                console.log(error);
                 reject(`${error.response.status}: ${error.response.statusText}`)
             });
     });
