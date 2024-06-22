@@ -1,6 +1,5 @@
 const fs = require('fs');
 const axios = require('axios');
-const readline = require('readline');
 
 /* 
  * Returns a map of the X most recent GROUP spaces the user belongs to.
@@ -24,7 +23,7 @@ function findGroups(token) {
                 // create the return map of title=>id
                 const rooms = new Array();
                 response.data.items.forEach(element => {
-                    rooms.push({name: element.title, value: element.id});
+                    rooms.push({ name: element.title, value: element.id });
                 })
                 resolve(rooms);
             })
@@ -99,6 +98,11 @@ function readJsonFile(filePath) {
     })
 }
 
+/* 
+ * Ask user to supply their Webex token
+ * The return value is an object, and not a string.
+ * @param {string} filePath - path the file to read
+ */
 async function askPassword() {
     const inquirer = await import('inquirer').then(module => module.default);
 
@@ -114,25 +118,45 @@ async function askPassword() {
     return answers.password;
 }
 
-async function askWhichRoom(roomList) {
+/* 
+ * Allow user to pick one item from a list.
+ * The return value is the value of the name the user picked.
+ * @param {string} message - prompt used to ask the user for input
+ * @param {array} choices - list of maps with keys 'name' and 'value' for the choices presented to the user
+ */
+async function askFromList(message, choices) {
     const inquirer = await import('inquirer').then(module => module.default);
 
-    const answer = await inquirer.prompt({
-        type: "list",
-        name: "roomId",
-        message: "Where do you want to send the card?",
-        choices: roomList
-    });
-    return answer.roomId;
+    const answer = await inquirer.prompt([
+        {
+            type: "list",
+            name: "userSelection",
+            message: message,
+            choices: choices
+        }
+    ]);
+    return answer.userSelection;
 }
 
+/* 
+ * The main function for this script
+ * @param {string} token - Webex token used for all API interactions
+ */
 async function mainFunc(token) {
     try {
+        // ask user where to send the message
         const roomList = await findGroups(token);
-        const card = await readJsonFile('message.json');
+        const roomId = await askFromList("Where do you want to send the card?", roomList);
+        
+        // ask user which JSON file to send
+        const files = fs.readdirSync('./').filter(fn => fn.endsWith('.json')).map(fn => ({
+            name: fn, 
+            value: fn
+        }));
+        const filename = await askFromList("Which card do you want to send?", files)
+        const card = await readJsonFile(filename);
 
-        const roomId = await askWhichRoom(roomList);
-
+        // send the requested card to the requested room
         const status = await sendAttachment(token, roomId, card);
         console.log(status);
     } catch (error) {
@@ -148,7 +172,7 @@ const tokenEnv = process.env.TOKEN;
 if (tokenEnv) {
     mainFunc(tokenEnv);
 
-// if the token is not defined, ask the user for the token
+    // if the token is not defined, ask the user for the token
 } else {
     askPassword().then(password => {
         mainFunc(password);
