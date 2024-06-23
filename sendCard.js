@@ -12,8 +12,8 @@ const fs = require('fs');
 const axios = require('axios');
 
 /* 
- * Returns a map of the X most recent GROUP spaces the user belongs to.
- * The format is Map(X) { id1 => title1, id2 => title2 }
+ * Returns a list of the X most recent GROUP spaces the user belongs to.
+ * The format of each item in the list is { name: room.title, value: room.id }
  * @param {string} token - Webex token for accessing API
  */
 function findGroups(token) {
@@ -22,7 +22,7 @@ function findGroups(token) {
         const config = {
             method: 'get',
             maxBodyLength: Infinity,
-            url: 'https://webexapis.com/v1/rooms?type=group&max=20',
+            url: 'https://webexapis.com/v1/rooms?type=group&max=20&sortBy=lastactivity',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -109,7 +109,7 @@ function readJsonFile(filePath) {
 
 /* 
  * Ask user to supply their Webex token
- * The return value is an object, and not a string.
+ * The return value is a string.
  * @param {string} filePath - path the file to read
  */
 async function askPassword() {
@@ -134,7 +134,7 @@ async function askPassword() {
  * @param {array} roomList - list of maps of rooms
  * @param {array} fileList - list of maps of filenames for cards
  */
-async function askWhichRoom(faveList, roomList, fileList) {
+async function askQuestions(faveList, roomList, fileList) {
     const inquirer = await import('inquirer').then(module => module.default);
 
     // if there are favorites, put them at the top of the list of choices
@@ -192,7 +192,7 @@ async function mainFunc(token) {
         }));
 
         // ask the user which card to send and which room to send it to
-        const [roomId, filename] = await askWhichRoom(favorites, roomList, files);
+        const [roomId, filename] = await askQuestions(favorites, roomList, files);
 
         // retrieve the actual card contents
         const card = await readJsonFile(filename);
