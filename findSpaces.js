@@ -2,8 +2,7 @@ const axios = require('axios');
 
 /* 
  * Ask user to supply their Webex token
- * The return value is an object, and not a string.
- * @param {string} filePath - path the file to read
+ * The return value is a string
  */
 async function askPassword() {
     const inquirer = await import('inquirer').then(module => module.default);
@@ -20,10 +19,16 @@ async function askPassword() {
     return answers.password;
 }
 
-
+/* 
+ * Main function for this script
+ * The return value is an object, and not a string.
+ * @param {string} token - token to use for the Webex API
+ */
 async function mainFunc(token) {
     const inquirer = await import('inquirer').then(module => module.default);
 
+    // ask the user what type of space (direct/group/both) and what text to
+    // search for in the title of the space
     const answers = await inquirer.prompt([
         {
             type: "list",
@@ -43,6 +48,7 @@ async function mainFunc(token) {
     ]);
 
     // API call to list all rooms of a certain type (default = 100 entries)
+    // if the searchType is blank, the API will return both group and direct
     const config = {
         method: 'get',
         maxBodyLength: Infinity,
@@ -52,15 +58,25 @@ async function mainFunc(token) {
         }
     };
 
+    // wait for the API get to complete
     const response = await axios.request(config);
-    const items = response.data.items;
-    const pattern = answers.searchTerm.toLowerCase();
-    const matches = items.filter((element) => element.title.toLowerCase().includes(pattern));
-    console.log(matches.map(element => ({
-        name: element.title,
-        value: element.id
-    })));
 
+    // the API returns a list of spaces under the keyword "items"
+    const items = response.data.items;
+
+    // convert the searchTerm to lowercase here so we don't have to repeat that operation
+    const pattern = answers.searchTerm.toLowerCase();
+
+    // filter the spaces to only those that match the search term and then
+    // display the title and id of each matching space with the keywords "name"
+    // and "value"
+    const matches = items
+        .filter((element) => element.title.toLowerCase().includes(pattern))
+        .map(element => ({
+            name: element.title,
+            value: element.id
+        }));
+    console.log(matches);
 }
 
 
