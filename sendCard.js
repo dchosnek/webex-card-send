@@ -1,3 +1,13 @@
+/**
+ * @file        sendCard.js
+ * @description Sends an Adaptive Card via Webex
+ * @version     1.0.0
+ * @license     MIT
+ * 
+ * @author      Doron Chosnek
+ * @date        2024-06-22
+ */
+
 const fs = require('fs');
 const axios = require('axios');
 

@@ -1,3 +1,13 @@
+/**
+ * @file        findSpaces.js
+ * @description Searches for Webex spaces by name
+ * @version     1.0.0
+ * @license     MIT
+ * 
+ * @author      Doron Chosnek
+ * @date        2024-06-22
+ */
+
 const axios = require('axios');
 
 /* 
