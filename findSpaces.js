@@ -76,7 +76,10 @@ async function mainFunc(token) {
             name: element.title,
             value: element.id
         }));
-    console.log(matches);
+
+    // use JSON.stringify so the console output can be copied into the 
+    // favorites.json file without modification
+    console.log(JSON.stringify(matches, null, 2));
 }
 
 
