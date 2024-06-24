@@ -1,8 +1,6 @@
 # Send Webex Adaptive Card
 
-Node.js script to send an adaptive card to a Webex space.
-
-You will need to retrieve a token from [the Webex developer portal](https://developer.webex.com/).
+Node.js script to send an adaptive card to a Webex space. Webex does not provide a user interface to do this. This project is an attempt to make this task more approachable.
 
 # Installation
 
