@@ -31,7 +31,6 @@ async function askPassword() {
 
 /* 
  * Main function for this script
- * The return value is an object, and not a string.
  * @param {string} token - token to use for the Webex API
  */
 async function mainFunc(token) {
@@ -43,7 +42,7 @@ async function mainFunc(token) {
         {
             type: "list",
             name: "searchType",
-            message: "What type of space",
+            message: "What type of space?",
             choices: [
                 { name: "direct", value: "direct" },
                 { name: "group", value: "group" },
@@ -53,7 +52,7 @@ async function mainFunc(token) {
         {
             type: "input",
             name: "searchTerm",
-            message: "What do you want to search for",
+            message: "What do you want to search for?",
         }
     ]);
 
