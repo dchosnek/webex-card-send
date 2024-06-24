@@ -46,6 +46,11 @@
         },
         {
             "type": "TextBlock",
+            "text": "Read about send messages and adaptive cards [here](https://developer.webex.com/docs/api/v1/messages/create-a-message).",
+            "wrap": true
+        },
+        {
+            "type": "TextBlock",
             "text": "Cards inherently have a vertical layout, meaning that each block or images appears above or below another block. To create a side-by-side layout, you'll need to use columns as shown above.",
             "wrap": true
         }
