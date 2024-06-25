@@ -61,7 +61,7 @@ async function mainFunc(token) {
     const config = {
         method: 'get',
         maxBodyLength: Infinity,
-        url: `https://webexapis.com/v1/rooms?sortBy=lastactivity&type=${answers.searchType}`,
+        url: `https://webexapis.com/v1/rooms?sortBy=lastactivity&max=200&type=${answers.searchType}`,
         headers: {
             'Authorization': `Bearer ${token}`
         }
