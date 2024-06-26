@@ -101,7 +101,9 @@ function readJsonFile(filePath) {
                 const jsonData = JSON.parse(data);
                 resolve(jsonData);
             } catch (err) {
-                reject(err);
+                // if JSON parsing failed, return gracefully and let the
+                // calling function handle the error
+                resolve(null);
             }
         });
     })
@@ -200,8 +202,12 @@ async function mainFunc(token) {
         const card = await readJsonFile(filename);
 
         // send the requested card to the requested room
-        const status = await sendAttachment(token, roomId, card);
-        console.log(status);
+        if (card) {
+            const status = await sendAttachment(token, roomId, card);
+            console.log(status);
+        } else {
+            console.log('\nCannot send. The file does not contain valid JSON.\n')
+        }
 
         // udpate the favorites if we used a roomId that was not already in
         // the list of favorites
