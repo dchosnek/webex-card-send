@@ -9,6 +9,7 @@
  */
 
 const axios = require('axios');
+const fs = require('fs');
 
 /* 
  * Ask user to supply their Webex token
@@ -27,6 +28,28 @@ async function askPassword() {
     ]);
 
     return answers.password;
+}
+
+/* 
+ * Append items to a file containing a JSON list
+ * @param {string} filename - name of the file containing JSON
+ * @param {string} newContent - additional items to add to the list
+ */
+async function appendJsonToFile(filename, newContent) {
+    // retrieve current content of the file
+    let currentContent;
+    try {
+        const contents = fs.readFileSync(filename, 'utf8');
+        currentContent = JSON.parse(contents);
+    } catch {
+        // if the file did not exist, create an empty list
+        currentContent = new Array();
+    }
+    // write out the combined content to a file (async)
+    const combined = currentContent.concat(newContent);
+    fs.writeFile(filename, JSON.stringify(combined, null, 2), (err) => {
+        if (err) throw err;
+    });
 }
 
 /* 
@@ -89,6 +112,20 @@ async function mainFunc(token) {
     // use JSON.stringify so the console output can be copied into the 
     // favorites.json file without modification
     console.log(JSON.stringify(matches, null, 2));
+
+    const confirm = await inquirer.prompt([
+        {
+            type: "confirm",
+            name: "appendTrue",
+            message: "Do you want to save to your favorites?",
+            default: true
+        }
+    ]);
+
+    // append the results found earlier to the favorites.json file
+    if (confirm.appendTrue) {
+        appendJsonToFile('favorites.json', matches);
+    }
 }
 
 
