@@ -109,24 +109,33 @@ function readJsonFile(filePath) {
     })
 }
 
-/* 
- * Ask user to supply their Webex token
- * The return value is a string.
- * @param {string} filePath - path the file to read
+/*
+ * Get the user's Webex token from environment variable or by prompt
+ * The return value is a string
  */
-async function askPassword() {
-    const inquirer = await import('inquirer').then(module => module.default);
+async function getToken() {
+    // retrieve token from environment variable
+    const tokenEnv = process.env.TOKEN;
 
-    const answers = await inquirer.prompt([
-        {
-            type: 'password',
-            name: 'password',
-            message: 'Enter your Webex token:',
-            mask: '*', // This will mask the input with asterisks
-        },
-    ]);
+    // if the token exists as an EV, return it
+    if (tokenEnv) {
+        return tokenEnv;
+    
+    // if the token does not exist as an EV, prompt user for it
+    } else {
+        const inquirer = await import('inquirer').then(module => module.default);
 
-    return answers.password;
+        const answers = await inquirer.prompt([
+            {
+                type: 'password',
+                name: 'token',
+                message: 'Enter your Webex token:',
+                mask: '*', // This will mask the input with asterisks
+            },
+        ]);
+
+        return answers.token;
+    }
 }
 
 /* 
@@ -172,7 +181,11 @@ async function askQuestions(faveList, roomList, fileList) {
  * The main function for this script
  * @param {string} token - Webex token used for all API interactions
  */
-async function mainFunc(token) {
+async function main() {
+
+    // get the user token either from EV or by prompting user
+    const token = await getToken();
+
     // check for favorites
     let favorites;
     try {
@@ -228,16 +241,7 @@ async function mainFunc(token) {
 }
 
 
-// retrieve token from environment variable
-const tokenEnv = process.env.TOKEN;
-
-// if the token is defined, use it
-if (tokenEnv) {
-    mainFunc(tokenEnv);
-
-    // if the token is not defined, ask the user for the token
-} else {
-    askPassword().then(password => {
-        mainFunc(password);
-    });
-}
+// Run the main function, and catch/display any errors
+main().catch(error => {
+    console.log(error.message);
+});
