@@ -91,7 +91,12 @@ async function mainFunc(token) {
     };
 
     // wait for the API get to complete
-    const response = await axios.request(config);
+    let response;
+    try {
+        response = await axios.request(config);        
+    } catch (err) {
+        throw new Error(err.message);
+    }
 
     // the API returns a list of spaces under the keyword "items"
     const items = response.data.items;
@@ -141,11 +146,13 @@ const tokenEnv = process.env.TOKEN;
 
 // if the token is defined, use it
 if (tokenEnv) {
-    mainFunc(tokenEnv);
+    mainFunc(tokenEnv).catch(error => { console.log(error.message); });
 
-    // if the token is not defined, ask the user for the token
+// if the token is not defined, ask the user for the token
 } else {
     askPassword().then(password => {
-        mainFunc(password);
+        mainFunc(password).catch(error => {
+            console.log(error.message);
+        });
     });
 }
