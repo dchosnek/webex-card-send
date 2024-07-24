@@ -109,22 +109,28 @@ async function mainFunc(token) {
             value: element.id
         }));
 
-    // use JSON.stringify so the console output can be copied into the 
-    // favorites.json file without modification
-    console.log(JSON.stringify(matches, null, 2));
+    // ask the user to save results to favorites if some results were found
+    if (matches.length) {
 
-    const confirm = await inquirer.prompt([
-        {
-            type: "confirm",
-            name: "appendTrue",
-            message: "Do you want to save to your favorites?",
-            default: true
+        // use JSON.stringify so the console output can be copied into the 
+        // favorites.json file without modification
+        console.log(JSON.stringify(matches, null, 2));
+        
+        const confirm = await inquirer.prompt([
+            {
+                type: "confirm",
+                name: "appendTrue",
+                message: "Do you want to save to your favorites?",
+                default: true
+            }
+        ]);
+    
+        // append the results found earlier to the favorites.json file
+        if (confirm.appendTrue) {
+            appendJsonToFile('favorites.json', matches);
         }
-    ]);
-
-    // append the results found earlier to the favorites.json file
-    if (confirm.appendTrue) {
-        appendJsonToFile('favorites.json', matches);
+    } else {
+        console.log('no matches found');
     }
 }
 
