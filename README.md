@@ -49,3 +49,10 @@ The script will prompt you for everything it needs (including your token). Just 
 ```
 node sendCard.js
 ```
+
+# Additional scripts
+
+There are additional utility scripts in this repo.
+
+1. `findSpaces.js` is used to locate Webex rooms/spaces by name. It will return all matching names and roomIds and ask if you would like to add it to your favorites.
+1. `findCards.js` is used to retrieve all adaptive cards sent in the `X` most recent used spaces.
