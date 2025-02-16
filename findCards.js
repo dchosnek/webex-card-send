@@ -30,7 +30,7 @@ function findRooms(token, num) {
         axios.request(config)
             .then(response => {
                 // retrieve the IDs from the JSON payload
-                const rooms = response.data.items.map(x => x.id);
+                const rooms = response.data.items.map(x => ({id: x.id, title:x.title}));
                 resolve(rooms);
             })
             .catch(error => {
@@ -45,7 +45,7 @@ function findRooms(token, num) {
  * @param {string} token - Webex token for accessing API
  * @param {string} roomId - the ID of the room to search
  */
-function findCards(token, roomId) {
+function findCards(token, roomId, roomTitle) {
     return new Promise((resolve, reject) => {
 
         const config = {
@@ -59,13 +59,14 @@ function findCards(token, roomId) {
 
         axios.request(config)
             .then(response => {
-                // create the return map of title=>id
-                const messages = response.data.items.filter(msg => msg.hasOwnProperty('attachments'));
+                // save only messages that have attachments and add roomTitle
+                // to each message
+                const messages = response.data.items
+                    .filter(msg => msg.hasOwnProperty('attachments'))
+                    .map(msg => ({...msg, roomTitle: roomTitle}));
                 resolve(messages);
             })
             .catch(error => {
-                // in the event of an error return the HTTP code and status
-                // reject(`${error.response.status}: ${error.response.statusText}`);
                 reject(error);
             })
     });
@@ -101,6 +102,9 @@ async function getToken() {
 }
 
 async function main(max) {
+    const inquirer = await import('inquirer').then(module => module.default);
+    const clipboardy = await import('clipboardy').then(module => module.default);
+
     // get the user token either from EV or by prompting user
     const token = await getToken();
 
@@ -108,20 +112,35 @@ async function main(max) {
     const rooms = await findRooms(token, max);
     
     // look for messages inside each of these rooms
-    const unresolved = rooms.map(x => findCards(token, x));
+    const unresolved = rooms.map(x => findCards(token, x.id, x.title));
     const results = await Promise.all(unresolved);
 
     // combine the list of lists into a single list
     const cardList = new Array();
     results.forEach(x => cardList.push(...x));
-    // send only the most important fields to the console
-    console.log(cardList.map(x => (
+    cardList.sort((a,b) => a.created - b.created);
+    const choices = cardList.map(x =>
+        ({
+            name: `${x.created} by ${x.personEmail} in ${x.roomTitle}`,
+            value: x.id,
+        })
+    );
+
+    const { messageId } = await inquirer.prompt([
         {
-            id: x.id, 
-            personEmail: x.personEmail, 
-            created: x.created,
-        }
-    )));
+            type: 'list',
+            name: 'messageId',  // This must match the destructured variable name
+            message: 'Choose the card to copy:',
+            choices: choices,
+            loop: false,
+        },
+    ]);
+
+    const selectedMessage = cardList.find(x => x.id === messageId)
+    const card = selectedMessage.attachments[0].content;
+
+    clipboardy.writeSync(JSON.stringify(card,null,2));
+    console.log("Card payload copied to clipboard");
 }
 
 
